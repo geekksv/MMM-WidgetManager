@@ -1,0 +1,28 @@
+{
+  "name": "mmm-widgetmanager",
+  "version": "1.0.0",
+  "description": "A single-window manager for the whole MagicMirror² screen: drag widgets between regions, edit their config, and apply changes live without a restart.",
+  "main": "MMM-WidgetManager.js",
+  "keywords": [
+    "MagicMirror",
+    "MagicMirror2",
+    "magicmirror-module",
+    "dashboard",
+    "config-editor",
+    "admin-panel"
+  ],
+  "author": "geekksv",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geekksv/MMM-WidgetManager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/geekksv/MMM-WidgetManager/issues"
+  },
+  "homepage": "https://github.com/geekksv/MMM-WidgetManager#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

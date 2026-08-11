@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Widget Manager — MagicMirror²</title>
+	<!-- ?v= is bumped whenever these change: the panel is often left open in a
+	     tab, and a stale copy makes a fix look like it did nothing. -->
+	<link rel="stylesheet" href="style.css?v=6" />
+</head>
+<body>
+
+<header class="bar">
+	<div class="brand">
+		<span class="logo" aria-hidden="true"></span>
+		<div class="brandtext">
+			<strong>Widget Manager</strong>
+			<span id="meta" class="muted"></span>
+		</div>
+	</div>
+
+	<div class="actions">
+		<span id="conn" class="conn" title="Connection to the mirror"><i></i><span>connecting</span></span>
+
+		<!-- Flips the mirror between the dark default and an inverted light look. -->
+		<button id="theme" class="swiper" role="switch" aria-checked="false"
+			title="Switch the mirror between dark and light">
+			<span class="swiper-track"><span class="swiper-knob"></span></span>
+			<span class="swiper-label" id="themeLabel">dark</span>
+		</button>
+		<!--
+			Filled from the `alarms` config option, which is empty by default — a
+			mirror with no alarm routes shows nothing here rather than a row of
+			permanently dead chips. Each configured alarm stays visible even when
+			quiet: knowing one is armed is as useful as being told it is not.
+		-->
+		<div class="alarms" id="alarms"></div>
+		<span id="dirty" class="pill hidden">unsaved</span>
+		<button id="reload" class="btn">Revert</button>
+		<button id="save" class="btn primary" disabled>Save &amp; apply</button>
+		<button id="restart" class="btn warn">Restart</button>
+
+			<div class="help">
+				<button class="info" aria-label="How changes apply" aria-describedby="helpcard">i</button>
+				<div class="helpcard" id="helpcard" role="tooltip">
+					<div class="hc-title">How changes apply</div>
+					<dl class="hc-list">
+						<dt>Hide / show</dt><dd>Immediate on the mirror. Runtime only — not saved.</dd>
+						<dt>Save &amp; apply</dt><dd>Writes config.js, keeps a timestamped backup, and reloads the mirror in about 3 seconds.</dd>
+						<dt>Enabled</dt><dd>Sets <code>disabled</code> in config.js. Survives a restart.</dd>
+						<dt>Restart</dt><dd>Full relaunch. Only needed when enabling a module that ships a node_helper.</dd>
+						<dt>Revert</dt><dd>Drop unsaved edits and re-read config.js.</dd>
+					</dl>
+					<p class="hc-note hc-foot">
+						Node helpers are created only at boot, so a module that has one cannot be
+						switched on live. The banner appears for exactly that case.
+					</p>
+				</div>
+			</div>
+	</div>
+</header>
+
+<section class="tray-wrap">
+	<div class="tray-head">
+		<span class="tray-title">Available widgets</span>
+		<span class="muted tray-hint">drag onto a region below · drag one back up here to take it off the screen</span>
+		<button id="hiddenLink" class="linkbtn hidden"></button>
+	</div>
+	<div class="tray" id="tray"></div>
+</section>
+
+<div id="banner" class="banner hidden">
+	<span class="bicon" aria-hidden="true">!</span>
+	<span id="bannerText"></span>
+	<button id="bannerRestart" class="btn warn sm">Restart now</button>
+</div>
+
+<main class="layout">
+
+	<section class="panel screen">
+		<h2>Screen <span class="muted">drop into a region · drag within a region to reorder</span></h2>
+		<div class="mirror-frame">
+			<div class="mirror" id="mirror"></div>
+		</div>
+		<div class="legend">
+			<span><i class="dot"></i>on screen</span>
+			<span><i class="dot hid"></i>hidden now</span>
+			<span><i class="dot off"></i>parked</span>
+			<span><i class="dot new"></i>not yet added</span>
+		</div>
+	</section>
+
+	<aside class="panel inspector">
+		<h2>Widget</h2>
+		<div id="inspector"></div>
+	</aside>
+
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js?v=6"></script>
+</body>
+</html>

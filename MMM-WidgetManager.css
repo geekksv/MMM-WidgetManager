@@ -1,0 +1,78 @@
+/*
+ * MMM-WidgetManager — the styling for the classes this module's own JS applies.
+ *
+ * A module owns the look of every class it sets and nothing more. This one sets
+ * two on the page itself — `mm-light` on <html> for the theme swiper, and
+ * `wm-row` on a container for side-by-side region flow — so both are defined
+ * here rather than expecting a custom.css that a fresh install will not have.
+ *
+ * Everything that is a matter of taste for a particular screen — edge padding,
+ * 4K zoom, per-region widths — deliberately stays out. See the README appendix.
+ */
+
+.wm-hint {
+	font-size: 12px;
+	opacity: 0.35;
+	letter-spacing: 1px;
+}
+
+/*
+ * ---------- Theme ----------
+ *
+ * MagicMirror's palette is four variables on :root (css/main.css:2-5), so a
+ * light theme is a variable swap rather than a stylesheet of overrides.
+ *
+ * The class goes on <html>, not <body>: html carries its own
+ * `background: var(--color-background)` (css/main.css:24) and shows through the
+ * body margin, so theming body alone leaves black edges around a white screen.
+ */
+html.mm-light {
+	--color-background: #fff;
+	--color-text: #4a4a4a;          /* mid grey reads better than #999 on white */
+	--color-text-dimmed: #8a8a8a;
+	--color-text-bright: #000;
+	--mm-ink: 0 0 0;
+}
+
+/*
+ * An opt-in convention for module authors, not a MagicMirror standard: the ink
+ * channel for rules, bars and chart strokes. Hardcoded white vanishes on a light
+ * background; written `rgb(var(--mm-ink) / 40%)` it follows the theme. Harmless
+ * if nothing references it.
+ */
+:root {
+	--mm-ink: 255 255 255;
+}
+
+/* Ease the swap so it reads as a deliberate change rather than a flash. */
+html,
+body {
+	transition: background-color 260ms ease, color 260ms ease;
+}
+
+/*
+ * ---------- Region flow ----------
+ *
+ * Regions stack vertically by default. `wm-row` lays one out side by side, so a
+ * narrow widget can sit beside another instead of under it. The margin reset
+ * matters: MagicMirror's per-module bottom margin becomes a gap in the wrong
+ * axis once the children are in a row.
+ */
+.container.wm-row {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--gap-modules, 10px);
+}
+
+.container.wm-row > .module {
+	margin-bottom: 0;
+	min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html,
+	body {
+		transition: none;
+	}
+}
