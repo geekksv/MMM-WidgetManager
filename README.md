@@ -8,7 +8,7 @@ Most changes apply to the running mirror in about **3 seconds, without a restart
 is [explained below](#how-changes-apply); it turns out MagicMirror will let you do it, but not in
 the obvious way.
 
-![The screen map](docs/screen-map.png)
+![The screen map — every region of the mirror, with widgets you can drag between them](docs/screen-map.png)
 
 ## Why this exists
 
@@ -67,6 +67,22 @@ http://<mirror-ip>:8080/widgets
 - **Theme** — flip the mirror between dark and light.
 - **Save & apply**, **Revert**, and **Restart** for the one case that needs it.
 
+### The inspector
+
+Select a widget to edit its position, order, header and config. The **i** next to CONFIG JSON
+reads that module's own `defaults` block out of its source, so you can see what is actually
+configurable without going to find the file.
+
+![The inspector, with a widget selected](docs/inspector.png)
+
+### Auto-fit
+
+Each region reports the scale it settled on. `96%` means the widgets in that column were shrunk
+slightly to fit the space they had — so you can see a layout is tight before it visibly clips.
+The **unsaved** pill tracks edits that have not been written to `config.js` yet.
+
+![Auto-fit percentages and the unsaved indicator](docs/auto-fit.png)
+
 ## Configuration
 
 | Option | Default | What it does |
@@ -124,6 +140,33 @@ asks the mirror page to reload. The reload reads the new layout — about 3 seco
 skipped then (`js/app.js:216`). So enabling a module that ships a `node_helper.js` — whether newly
 added or un-parked — genuinely needs a restart. The panel detects exactly that case and raises the
 restart banner. Nothing else triggers it.
+
+The **i** button in the toolbar summarises the same thing at a glance:
+
+![The i button, summarising which actions apply live and which need a restart](docs/how-changes-apply.png)
+
+## Controlling the mirror from a terminal
+
+The mirror runs frameless and fullscreen, so there is no window to close and often no
+<kbd>Alt</kbd>+<kbd>Tab</kbd> bound. This module ships [`scripts/mm`](scripts/mm), a small wrapper
+for driving it from a shell:
+
+```console
+$ mm status
+MagicMirror is RUNNING (pid 115883)
+  mirror : http://192.168.1.42:8080/
+  widgets: http://192.168.1.42:8080/widgets
+
+$ mm restart
+Stopping MagicMirror... done.
+Starting MagicMirror................. up.
+```
+
+`start` · `stop` · `restart` · `toggle` · `status` · `log`.
+
+**→ [Controlling the mirror — full guide](docs/controlling-the-mirror.md)** covers installing it,
+reaching a terminal over a fullscreen mirror, running under pm2/systemd/Docker, starting at boot,
+and a troubleshooting table.
 
 ## Theming convention (`--mm-ink`)
 

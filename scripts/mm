@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# Control MagicMirror² from a terminal.
+#
+# MagicMirror runs as a frameless, fullscreen Electron window (js/electron.js
+# sets frame:false, fullscreen:true), so there is no titlebar to close and no
+# window to minimise. On a kiosk desktop that binds no Alt+F4 or Alt+Tab, this
+# script is the practical way to get the screen back.
+#
+#   mm start | stop | restart | status | toggle | log
+#
+# Install:
+#   cp modules/MMM-WidgetManager/scripts/mm ~/.local/bin/mm && chmod +x ~/.local/bin/mm
+#
+# Configuration, both optional:
+#   MM_DIR   MagicMirror root. Defaults to this script's own location, assuming
+#            it is still inside modules/MMM-WidgetManager/scripts/.
+#   MM_LOG   Where start-up output goes. Defaults to $TMPDIR/magicmirror.log.
+
+set -uo pipefail
+
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MM_DIR="${MM_DIR:-$(cd "$SELF/../../.." 2>/dev/null && pwd)}"
+MM_LOG="${MM_LOG:-${TMPDIR:-/tmp}/magicmirror.log}"
+PORT="${MM_PORT:-8080}"
+
+if [ ! -f "$MM_DIR/js/electron.js" ]; then
+	echo "Not a MagicMirror directory: $MM_DIR" >&2
+	echo "Set MM_DIR to your MagicMirror root and try again." >&2
+	exit 1
+fi
+
+# Bracketed first letter so the pattern cannot match this script's own command
+# line — otherwise `mm stop` kills the shell that invoked it.
+PATTERN="[${MM_DIR:0:1}]${MM_DIR:1}/node_modules/electron/dist/electron"
+
+running () { pgrep -f "$PATTERN" >/dev/null 2>&1; }
+
+stop_mm () {
+	if ! running; then
+		echo "MagicMirror is not running."
+		return 0
+	fi
+	echo -n "Stopping MagicMirror"
+	pkill -f "$PATTERN"
+	for _ in $(seq 1 20); do
+		running || break
+		echo -n "."
+		sleep 0.5
+	done
+	if running; then
+		echo " forcing."
+		pkill -9 -f "$PATTERN"
+		sleep 1
+	else
+		echo " done."
+	fi
+}
+
+start_mm () {
+	if running; then
+		echo "MagicMirror is already running."
+		return 0
+	fi
+	echo -n "Starting MagicMirror"
+
+	# A launcher script if the installation has one, otherwise electron direct.
+	if [ -x "$MM_DIR/start-magicmirror.sh" ]; then
+		setsid nohup "$MM_DIR/start-magicmirror.sh" >"$MM_LOG" 2>&1 </dev/null &
+	else
+		setsid nohup env -C "$MM_DIR" ./node_modules/.bin/electron js/electron.js \
+			>"$MM_LOG" 2>&1 </dev/null &
+	fi
+	disown 2>/dev/null
+
+	# Electron plus a set of module helpers can take well over a minute from cold
+	# on a Raspberry Pi, so be generous before calling it a failure.
+	for _ in $(seq 1 120); do
+		if curl -sS -o /dev/null -m 2 "http://127.0.0.1:${PORT}/" 2>/dev/null; then
+			echo " up."
+			return 0
+		fi
+		echo -n "."
+		sleep 1
+	done
+	echo " no response yet — check $MM_LOG"
+	return 1
+}
+
+status_mm () {
+	if running; then
+		local ip
+		ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+		[ -n "$ip" ] || ip="localhost"
+		echo "MagicMirror is RUNNING (pid $(pgrep -f "$PATTERN" | head -1))"
+		echo "  mirror : http://${ip}:${PORT}/"
+		echo "  widgets: http://${ip}:${PORT}/widgets"
+	else
+		echo "MagicMirror is STOPPED.  Start it with: mm start"
+	fi
+}
+
+case "${1:-status}" in
+	stop)    stop_mm ;;
+	start)   start_mm ;;
+	restart) stop_mm; start_mm ;;
+	status)  status_mm ;;
+	toggle)  if running; then stop_mm; else start_mm; fi ;;
+	log)     tail -n "${2:-40}" "$MM_LOG" ;;
+	*)
+		echo "usage: mm {start|stop|restart|status|toggle|log [lines]}" >&2
+		exit 1
+		;;
+esac
