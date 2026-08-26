@@ -65,6 +65,7 @@ alarms: [
         label:   "servers",           // shown on the chip
         status:  "/server/status",    // polled every 5s, must return JSON
         mute:    "/server/mute",      // optional — clicking a ringing chip calls this
+        sound:   "/server/sound",     // optional — adds a speaker toggle to the chip
         level:   "severity",          // a field already holding "ok" | "warn" | "down"
         ringing: "alarming",          // truthy => the chip pulses
         muted:   "muted",
@@ -84,8 +85,34 @@ alarms: [
 | `level` | | How to derive `ok` / `warn` / `down` — see below. Defaults to `ok` |
 | `ringing` | | Field name that, when truthy, makes the chip pulse. Default `"alarming"` |
 | `muted` | | Field name for the muted state. Default `"muted"` |
+| `sound` | | Base URL for a sound toggle. The chip gains a speaker button calling `<sound>/on` and `<sound>/off` |
+| `silent` | | Field name for the silenced state. Default `"silent"` |
 | `text` | | Chip text per level. `{n}` is replaced by `count` |
 | `count` | | Field supplying `{n}`. An array's length is used if it is an array |
+
+### Muting is not silencing
+
+They answer different questions, so the chip offers both.
+
+**Clicking the chip** mutes: it acknowledges the faults present at that moment and
+re-arms itself as soon as a new one appears. That is what you want when you have
+seen the problem and are dealing with it.
+
+**The speaker button** silences: a standing choice about whether this alarm is
+ever audible. Somebody running both a support alarm and a fleet alarm usually
+wants to hear one of them and not the other, and mute cannot say that — it would
+un-say it on the next fault.
+
+A silenced alarm still shows its colour, its count and its ringing state, and
+still reports honestly on its status route. It just makes no noise. The chip dims
+slightly and stops pulsing so the difference is visible across the room.
+
+### An unrecognised level reads as "off"
+
+If `level` names a field whose value is not `ok`, `warn` or `down` — a module
+that is up but cannot reach the thing it monitors, say — the chip greys out
+rather than showing green. A dashboard that reports "fine" when it does not
+actually know is worse than one that admits it.
 
 ### Two forms of `level`
 

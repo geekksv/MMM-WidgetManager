@@ -732,3 +732,28 @@ h2 {
 @media (prefers-reduced-motion: reduce) {
 	.alarm.ringing { animation: none; }
 }
+
+/*
+ * The per-alarm sound toggle. Deliberately quiet until you look for it: the
+ * chip's own colour is the thing that should catch the eye across the room, and
+ * a second bright control beside it would compete with the fault it is reporting.
+ */
+.alsound {
+	background: none;
+	border: 0;
+	padding: 0 0 0 2px;
+	margin-left: 1px;
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0.55;
+	filter: grayscale(1);
+	transition: opacity 120ms ease;
+}
+.alsound:hover { opacity: 1; }
+.alsound:disabled { cursor: default; opacity: 0.3; }
+
+/* Silenced: the chip keeps reporting, but says so. */
+.alarm.hushed b,
+.alarm.hushed .alstate { opacity: 0.55; }
+.alarm.hushed.ringing { animation: none; }

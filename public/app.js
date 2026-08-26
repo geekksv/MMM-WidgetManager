@@ -979,11 +979,21 @@
 			// Module not installed, or the mirror is restarting.
 			view = { level: "off", text: "n/a" };
 		}
-		el.className = `alarm a-${view.level}${view.alarming ? " ringing" : ""}`;
+		el.className = `alarm a-${view.level}${view.alarming ? " ringing" : ""}`
+			+ (view.silent ? " hushed" : "");
 		el.querySelector(".alstate").textContent = view.text;
 		el.title = view.alarming
-			? "Sounding now — click to mute"
+			? (view.silent ? "Sounding, but this alarm is silenced" : "Sounding now — click to mute")
 			: (view.muted ? "Muted; re-arms on the next new fault" : "Armed and quiet");
+
+		const sp = el.querySelector(".alsound");
+		if (sp) {
+			sp.classList.toggle("off", view.silent);
+			sp.textContent = view.silent ? "🔇" : "🔊";
+			sp.title = view.silent
+				? `${spec.label || spec.id}: sound off — click to turn it on`
+				: `${spec.label || spec.id}: sound on — click to silence it`;
+		}
 	}
 
 	/**
@@ -1002,7 +1012,13 @@
 	function readAlarm (s, spec) {
 		let level = "ok";
 		if (typeof spec.level === "string") {
-			level = ["down", "warn", "ok"].includes(s[spec.level]) ? s[spec.level] : "ok";
+			/*
+			 * An unrecognised value means the module is up but does not know its
+			 * own state — a feed it cannot reach, say. Showing that as a healthy
+			 * green chip is the one answer that is certainly wrong, so it reads
+			 * as "off" instead, exactly like a module that is not installed.
+			 */
+			level = ["down", "warn", "ok"].includes(s[spec.level]) ? s[spec.level] : "off";
 		} else if (spec.level) {
 			if (s[spec.level.down]) level = "down";
 			else if (s[spec.level.warn]) level = "warn";
@@ -1013,7 +1029,8 @@
 			level,
 			text: text ? String(text).replace("{n}", count) : level,
 			alarming: Boolean(s[spec.ringing || "alarming"]),
-			muted: Boolean(s[spec.muted || "muted"])
+			muted: Boolean(s[spec.muted || "muted"]),
+			silent: Boolean(s[spec.silent || "silent"])
 		};
 	}
 
@@ -1032,6 +1049,34 @@
 			el.title = spec.label || spec.id || "";
 			el.innerHTML = `<i></i><b></b><span class="alstate">—</span>`;
 			el.querySelector("b").textContent = spec.label || spec.id || "alarm";
+
+			/*
+			 * A speaker toggle, when the alarm exposes one. Distinct from clicking
+			 * the chip: mute acknowledges the faults present right now and re-arms
+			 * itself, whereas this decides whether this alarm is ever audible.
+			 * Somebody who wants the chat alarm but not the fleet alarm needs the
+			 * second thing, and had no way to say so.
+			 */
+			if (spec.sound) {
+				const sp = document.createElement("button");
+				sp.className = "alsound";
+				sp.type = "button";
+				sp.title = `Sound for ${spec.label || spec.id}`;
+				sp.onclick = async (ev) => {
+					ev.stopPropagation();          // do not also mute the chip
+					const turningOn = sp.classList.contains("off");
+					sp.disabled = true;
+					try {
+						await fetch(`${spec.sound}/${turningOn ? "on" : "off"}`);
+						toast(`${spec.label || spec.id}: sound ${turningOn ? "on" : "off"}`, "");
+					} catch {
+						toast("Could not reach that alarm.", "bad");
+					}
+					sp.disabled = false;
+					pollAlarms();
+				};
+				el.appendChild(sp);
+			}
 			// Clicking a ringing alarm mutes it; clicking a quiet one does nothing.
 			if (spec.mute) {
 				el.onclick = async () => {
