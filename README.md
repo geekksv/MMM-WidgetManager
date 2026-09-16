@@ -34,6 +34,8 @@ restart. [That turns out to be possible for an interesting reason →](docs/how-
   mirror, a feed that died an hour ago looks identical to a healthy one.
 - **Tune the fit** — per-widget scaling, side-by-side region layout, and a dark/light toggle.
 
+![Editing a widget — position, order, size, header and live config JSON, with the screen map still visible beside it](docs/widget-editor.png)
+
 ## Install
 
 ```bash
